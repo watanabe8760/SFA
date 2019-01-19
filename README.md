@@ -9,18 +9,21 @@ the UCR time series classification benchmark has led to two pitfalls, namely: (a
 they assume pre-processed datasets. There are additional desirable properties: (a) alignment-free structural 
 similarity, (b) noise-robustness, and (c) scalability.
 
-This repository contains a symbolic time series representation (**SFA**) and three univariate (**WEASEL**, **BOSS** and **BOSSVS**) and one multivariate (**WEASEL+MUSE**) time series model(s) for alignment-free, noise-robust and scalable time series data analytics.  
+This repository contains a symbolic time series representation (**SFA**), three univariate (**WEASEL**, **BOSS** and **BOSSVS**) and one multivariate (**WEASEL+MUSE**) time series model(s) for alignment-free, noise-robust and scalable time series data analytics. Finally, the early time series classification framework **TEASER** is provided.
+
 
 The implemented algorithms are in the context of:
 
 1. **Dimensionality Reduction**: SFA performs significantly better than many other dimensionality reduction techniques including those techniques based on mean values like SAX, PLA, PAA, or APCA. This is due the fact, that SFA builds upon DFT, which is significantly more accurate than the other dimensionality reduction techniques [[1]](http://dl.acm.org/citation.cfm?doid=2247596.2247656).
 
-2. **Classification and Accuracy**: WEASEL and the BOSS ensemble classifier offer state of art classification accuracy [[2]](http://arxiv.org/abs/1602.01711), [[3]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7), [[4]](https://arxiv.org/abs/1701.07681).
+2. **Classification and Accuracy**: WEASEL and the BOSS ensemble classifier offer state-of-art classification accuracy [[2]](http://arxiv.org/abs/1602.01711), [[3]](http://link.springer.com/article/10.1007%2Fs10618-014-0377-7), [[4]](https://arxiv.org/abs/1701.07681).
 
 3. **Classification and Scalability**: WEASEL follows the bag-of-patterns approach which achieves highly competitive classification accuracies and is very fast, making it applicable in domains with high runtime and quality constraints. The novelty of WEASEL is its carefully engineered feature space using statistical feature selection, word co-occurrences, and a supervised symbolic representation for generating discriminative words. Thereby, WEASEL assigns high weights to characteristic, variable-length substructures of a TS. In our evaluation, WEASEL is consistently among the best and fastest methods, and competitors are either at the same level of quality but much slower or faster but much worse in accuracy. [[4]](https://dl.acm.org/citation.cfm?doid=3132847.3132980).
 The BOSS VS classifier is one to four orders of magnitude faster than state of the art and significantly more accurate than the 1-NN DTW classifier, which serves as the benchmark to compare to. I.e., one can solve a classification problem with 1-NN DTW CV that runs on a cluster of 4000 cores for one day, with the BOSS VS classifier using commodity hardware and a 4 core cpu within one to two days resulting in a similar or better classification accuracy [[5]](http://link.springer.com/article/10.1007%2Fs10618-015-0441-y). 
 
-4. **Multivariate classification**: WEASEL+MUSE is a multivariate time series classifier that offers state of art classification accuracy [[6]](https://arxiv.org/abs/1711.11343).
+4. **Multivariate classification**: WEASEL+MUSE is a multivariate time series classifier that offers state-of-art classification accuracy [[6]](https://arxiv.org/abs/1711.11343).
+
+5. **Early and accurate classification**: TEASER is a framework for early and accurate time series classification. The early classification task arises when data is collected over time, and it is desirable, or even required, to predict the class label of a time series as early as possible. As such, the earlier a decision can be made, the more rewarding it can be. TEASER is two to three times as early while keeping the same (or even a higher) level of accuracy, when compared to the state of the art.
 
 ![SFA](images/classifiers2.png)
 
@@ -39,6 +42,62 @@ The figure shows for the state-of-the-art classifiers the total runtime on the x
 There are fast time series classifiers (BOSS VS, TSBF, LS, DTW CV) that require a few ms per prediction, but have a low average rank; and there are accurate methods (ST; BOSS; EE; COTE) that require hundredths of ms to seconds per prediction. The two ensemble methods in our comparison, EE PROP and COTE, show the highest prediction times. 
 
 There is always a trade-off between accuracy and prediction times.  However, WEASEL is consistently among the best and fastest predicting methods, and competitors are (a) either at the same level of quality (COTE) but much slower or (b) faster but much worse in accuracy (LS, DTW CV, TSBF, or BOSS VS).
+
+
+# How to include this project as a library
+
+Step 1. Add the JitPack repository to your gradle build file:
+
+```Gradle
+	allprojects {
+		repositories {
+			...
+			maven { url 'https://jitpack.io' }
+		}
+	}
+```
+
+Step 2. Add the dependency:
+
+```Gradle
+	dependencies {
+	        compile 'com.github.patrickzib:SFA:v0.1'
+	}
+```
+
+See  [![](https://jitpack.io/v/patrickzib/SFA.svg)](https://jitpack.io/#patrickzib/SFA/v0.1) for further instructions on other build systems such as maven. 
+
+# How to import this project into your favorite IDE
+
+You can import this project into your favorite IDE using gradle. This project has been tested with (minor versions might also work):
+* Gradle >=3.5. Please refer to [GRADLE](https://gradle.org/install/#helpful-information) for further instructions on how to install gradle.
+* Java JVM >=1.8
+ 
+The project has two gradle build targets, one for IntelliJ IDEA and one for Eclipse. 
+
+IntelliJ IDEA:
+```
+> gradle idea
+:ideaModule
+:ideaProject
+:ideaWorkspace
+:idea
+
+BUILD SUCCESSFUL
+```
+
+Eclipse: 
+```
+> gradle eclipse
+:eclipseClasspath
+:eclipseJdt
+:eclipseProject
+:eclipse
+
+BUILD SUCCESSFUL
+```
+
+This will create an IntelliJ IDEA or Eclipse project.
 
 # SFA: Symbolic Fourier Approximation
 
@@ -262,7 +321,7 @@ CIKM 2017, (accepted), [[LINK arXiv]](https://arxiv.org/abs/1701.07681), [[LINK 
 
 
 
-# WEASEL+MUSE: WEASEL + MUltivariate Symbols and dErivatives
+# WEASEL+MUSE: WEASEL + MUltivariate Symbolic Extension
 
 
 WEASEL+MUSE is an extension of the univariate WEASEL classifier to allow for
@@ -310,6 +369,80 @@ Predicions predictions = muse.score(testSamples);
 arXiv 2017, [[LINK]](https://arxiv.org/abs/1711.11343)
 
 
+# Multivariate Dataset format
+
+The multivariate dataset format is based on [Multivariate Time Series Classification Datasets](http://www.mustafabaydogan.com/files/viewdownload/14-multivariate-time-series-classification/29-multivariate-time-series-classification-datasets.html).
+
+The first column is the sample id, the second column is the time stamp of the observations, the **third column is the label** for the sample (and it may not change for the same sample id), the last columns are the observations (different dimensions of the multivariate time series).
+
+An example:
+
+|Sample Id|Time Stamp|Class |Pressure|Temperature|Energy|
+|------|-----------|------|---------|------------|-------|
+|1 |1|1|2.70|80.50|4.50|
+|1|2|1|3.20|78.40|6.70|
+|1|3|1|4.20|67.90|3.40|
+|1|4|1|8.20|89.50|7.20|
+|1|5|1|8.90|85.70|5.70|
+|2|1|3|16.34|97.54|5.02|
+|2|2|3|17.61|99.66|5.01|
+|2|3|3|18.87|101.60|4.90|
+|2|4|3|20.14|103.54|4.95|
+|2|5|3|22.67|107.43|4.95|
+|2|6|3|21.15|106.50|4.97|
+|..|..|..|..|..|..|
+|N|1|0|8.90|85.70|5.70|
+|N|2|0|10.01|88.00|5.05|
+|N|3|0|11.28|89.94|5.04|
+ 
+
+# TEASER: Two-Tier Early and Accurate Series classifiER (TEASER)
+
+
+In many applications measurements arrive over time and the collection of additional measurements is associated with a cost, or it is critical to act as early as possible. In this context, it is desirable to have a high-quality classification as soon as possible, while sacrificing as little accuracy as possible. The state-of-the-art methods in early time series classification compute an optimal decision time from the train time series. However, this approach assumes that a time series has a defined start (like turning on a machine), whereas in many applications measurements start at arbitrary times in an essentially infinite time series (like heartbeats in a patient). 
+
+TEASER is a method for early and accurate time series classification. TEASER’s decision for the safety (accuracy) of a prediction is treated as a two-stage classification problem: A slave classifier continuously classifies the time series, and a master classifier decides whether this result should be trusted or not.
+
+In our experimental evaluation using a benchmark of time series datasets [[LINK]](http://www.cs.ucr.edu/~eamonn/time_series_data/), TEASER is two to three times as early while keeping the same (or even a higher) level of accuracy, when compared to the state of the art. 
+
+
+**Usage:**
+
+First, load datasets, set parameters (or keep defaults), and train the TEASER model.
+
+```java
+// Load the train/test splits
+TimeSeries[] trainSamples = TimeSeriesLoader.loadDataset(train);
+
+// The TEASER-classifier
+TEASERClassifier t = new TEASERClassifier();
+
+/* The total number of time stamps S: a time stamp is a fraction of the full time series 
+length n. S is typically a constant set to 20, such that a prediction will be made after 
+every 5% of the full time series length. */
+TEASERClassifier.S = 20.0;
+
+Score scoreT = t.fit(trainSamples);
+
+```
+
+Finally, predict test labels:
+
+```java
+TimeSeries[] testSamples = TimeSeriesLoader.loadDataset(test);
+
+// Predict labels
+Double[] pred = t.predict(testSamples);
+
+// Alternatively predict labels and obtain offsets
+OffsetPrediction offsetPred = t.predict(testSamples, true);
+
+```
+
+
+**References**
+
+TBA
 
 
 # Use Cases / Tests

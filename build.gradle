@@ -6,6 +6,15 @@
  * user guide available at https://docs.gradle.org/4.0.2/userguide/tutorial_java_projects.html
  */
 
+plugins {
+  id 'com.gradle.build-scan' version '1.16'
+}
+
+buildScan {
+  licenseAgreementUrl = 'https://gradle.com/terms-of-service'
+  licenseAgree = 'yes'
+}
+
 // Apply the java plugin to add support for Java
 apply plugin: 'java'
 
@@ -19,11 +28,27 @@ apply plugin: 'idea'
 // Apply the application plugin to add support for building an application
 apply plugin: 'application'
 
+apply plugin: 'maven-publish'
+
+group = 'sfa'
+version = '0.1'
 // In this section you declare where to find the dependencies of your project
 repositories {
     // Use jcenter for resolving your dependencies.
     // You can declare any Maven/Ivy/file repository here.
     mavenCentral()
+}
+
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId 'com.github.patrickzib'
+            artifactId 'sfa'
+            version '0.1'
+            from components.java
+        }
+    }
 }
 
 dependencies {
@@ -35,6 +60,8 @@ dependencies {
     compile 'com.carrotsearch:hppc:0.7.2'
     // java serialiser
     compile 'com.esotericsoftware:kryo:4.0.1'
+    // libSVM in java
+    compile "tw.edu.ntu.csie:libsvm:3.17"
 
     compile 'junit:junit:4.12'
     testCompile 'junit:junit:4.12'

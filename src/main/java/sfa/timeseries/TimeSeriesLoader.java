@@ -40,7 +40,11 @@ public class TimeSeriesLoader {
         if (line.startsWith("@")) {
           continue;
         }
-        String[] columns = line.split(" ");
+
+        // switch between old " " and new separator "," in the UCR archive
+        String separator = (line.contains(",") ? "," : " ");
+        String[] columns = line.split(separator);
+
         double[] data = new double[columns.length];
         int j = 0;
         Double label = null;
@@ -143,12 +147,12 @@ public class TimeSeriesLoader {
       TimeSeries[] samples = mts.timeSeries;
       for (int a = 0; a < samples.length; a++) {
         TimeSeries s = samples[a];
-        double[] d = new double[s.getLength() - 1];
+        double[] d = new double[s.getLength()];
         for (int i = 1; i < s.getLength(); i++) {
-          d[i - 1] = s.getData()[i] - s.getData()[i - 1];
+          d[i - 1] = Math.abs(s.getData()[i] - s.getData()[i - 1]);
         }
-        deltas[2 * a] = samples[a];
-        deltas[2 * a + 1] = new TimeSeries(d, mts.getLabel());
+        deltas[a] = samples[a];
+        deltas[mts.timeSeries.length + a] = new TimeSeries(d, mts.getLabel());
       }
       mts.timeSeries = deltas;
     }

@@ -23,10 +23,10 @@ public class UCRClassificationTest {
           "DiatomSizeReduction",
           "ECGFiveDays",
           "TwoLeadECG",
-          "SonyAIBORobot SurfaceII",
+          "SonyAIBORobotSurfaceII",
           "MoteStrain",
           "ItalyPowerDemand",
-          "SonyAIBORobot Surface",
+          "SonyAIBORobotSurface",
   };
 
   @Test
@@ -34,8 +34,8 @@ public class UCRClassificationTest {
     // the relative path to the datasets
     ClassLoader classLoader = SFAWordsTest.class.getClassLoader();
 
-    File dir = new File(classLoader.getResource("datasets/univariate/").getFile());
-    //File dir = new File("/Users/bzcschae/workspace/similarity/datasets/classification");
+    //File dir = new File(classLoader.getResource("datasets/univariate/").getFile());
+    File dir = new File("/Users/bzcschae/workspace/similarity/datasets/classification");
 
     for (String s : datasets) {
       File d = new File(dir.getAbsolutePath() + "/" + s);

@@ -3,6 +3,7 @@
 package sfa.classification;
 
 import com.carrotsearch.hppc.cursors.IntIntCursor;
+
 import de.bwaldvogel.liblinear.*;
 import sfa.timeseries.MultiVariateTimeSeries;
 import sfa.timeseries.TimeSeries;
@@ -23,20 +24,23 @@ import java.util.Comparator;
 public class MUSEClassifier extends Classifier {
 
   public static int maxF = 6;
-  public static int minF = 4;
+  public static int minF = 2;
   public static int maxS = 4;
   public static SFA.HistogramType[] histTypes
       = new SFA.HistogramType[]{SFA.HistogramType.EQUI_DEPTH, SFA.HistogramType.EQUI_FREQUENCY};
 
   public static double chi = 2;
   public static double bias = 1;
-  public static SolverType solverType = SolverType.L2R_LR_DUAL;
-  public static int iterations = 1000;
+  public static SolverType solverType = SolverType.L2R_LR;
+  public static int iterations = 5000;
   public static double p = 0.1;
   public static double c = 1;
 
   public static boolean BIGRAMS = true;
-  public static boolean lowerBounding = true;
+  public static boolean lowerBounding = false;
+
+  public static int MIN_WINDOW_LENGTH = 2;
+  public static int MAX_WINDOW_LENGTH = 450;
 
   // the trained muse model
   MUSEModel model;
@@ -164,19 +168,14 @@ public class MUSEClassifier extends Classifier {
       boolean bestNorm = false;
       SFA.HistogramType bestHistType = null;
 
-      int min = 4;
-      int max = getMax(samples, MAX_WINDOW_LENGTH);
-      final int[] windowLengths = new int[max - min + 1];
-      for (int w = min, a = 0; w <= max; w++, a++) {
-        windowLengths[a] = w;
-      }
-
       optimize:
       for (final SFA.HistogramType histType : histTypes) {
         for (final boolean mean : NORMALIZATION) {
+          int[] windowLengths = getWindowLengths(samples, mean);
           final MUSE model = new MUSE(maxF, maxS, histType, windowLengths, mean, lowerBounding);
           final int[][][] words = model.createWords(samples);
           for (int f = minF; f <= maxF; f += 2) {
+
             model.dict.reset();
             MUSE.BagOfBigrams[] bag = model.createBagOfPatterns(words, samples, dimensionality, f);
             model.filterChiSquared(bag, chi);
@@ -185,7 +184,7 @@ public class MUSEClassifier extends Classifier {
             final Problem problem = initLibLinearProblem(bag, model.dict, bias);
             int correct = trainLibLinear(problem, solverType, c, iterations, p, folds);
 
-            if (correct > maxCorrect) {
+            if (correct > maxCorrect || correct == maxCorrect && f < bestF) {
               maxCorrect = correct;
               bestF = f;
               bestNorm = mean;
@@ -202,6 +201,7 @@ public class MUSEClassifier extends Classifier {
         }
       }
 
+      final int[] windowLengths = getWindowLengths(samples, bestNorm);
 
       // obtain the final matrix
       MUSE model = new MUSE(bestF, maxS, bestHistType, windowLengths, bestNorm, lowerBounding);
@@ -211,7 +211,9 @@ public class MUSEClassifier extends Classifier {
 
       // train liblinear
       Problem problem = initLibLinearProblem(bob, model.dict, bias);
-      de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, new Parameter(solverType, c, iterations, p));
+      Parameter par = new Parameter(solverType, c, iterations, p);
+      //par.setThreadCount(Math.min(Runtime.getRuntime().availableProcessors(),10));
+      de.bwaldvogel.liblinear.Model linearModel = Linear.train(problem, par);
 
       return new MUSEModel(
           bestNorm,
@@ -228,6 +230,16 @@ public class MUSEClassifier extends Classifier {
       e.printStackTrace();
     }
     return null;
+  }
+
+  public int[] getWindowLengths(final MultiVariateTimeSeries[] samples, boolean norm) {
+    int min = norm && MIN_WINDOW_LENGTH<=2? Math.max(3,MIN_WINDOW_LENGTH) : MIN_WINDOW_LENGTH;
+    int max = getMax(samples, MAX_WINDOW_LENGTH);
+    final int[] windowLengths = new int[max - min + 1];
+    for (int w = min, a = 0; w <= max; w++, a++) {
+      windowLengths[a] = w;
+    }
+    return windowLengths;
   }
 
   public Double[] predict(final MultiVariateTimeSeries[] samples) {
@@ -257,7 +269,7 @@ public class MUSEClassifier extends Classifier {
 
     Problem problem = new Problem();
     problem.bias = bias;
-    problem.n = dict.size() + 2 + 1;
+    problem.n = dict.size() + 1;
     problem.y = getLabels(bob);
 
     final FeatureNode[][] features = initLibLinear(bob, problem.n);
